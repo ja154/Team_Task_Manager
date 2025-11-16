@@ -1,11 +1,8 @@
-from math import log
-import re
-from app.models import User
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from exttensions import db
-from modelsTask,  imoport User, Task
+from extensions import db
+from models import User, Task
 
 app = Flask(__name__) ##initialising the flask app
 app.config['SECRET_KEY'] = 'testkey' ##secret key for the app
@@ -62,11 +59,11 @@ def login():
         password = request.form.get('password') ##get the password from the form
         user = User.query.filter_by(username=username).first() ##query the user from the database
         
-    if user and check_password_hash(user.password, password): ##if user exists and password is correct
-        login_user(user) ##login the user
-        return redirect(url_for('admin_dashboard' if user.role == 'admin' else 'dashboard'
-    flash('Invalid username or password','error') ##flash error message
-    return render_template('login.html'))) ##render the login template
+        if user and check_password_hash(user.password, password): ##if user exists and password is correct
+            login_user(user) ##login the user
+            return redirect(url_for('admin_dashboard' if user.role == 'admin' else 'dashboard'))
+        flash('Invalid username or password','error') ##flash error message
+    return render_template('login.html') ##render the login template
 
 ##dashboard route for authorized users
 
@@ -86,7 +83,7 @@ def admin_dashboard():
         flash('Access denied: Admins only.','error') ##flash error message
         return redirect(url_for('dashboard'))
     
-    task = Task.query.all() ##query all tasks
+    tasks = Task.query.all() ##query all tasks
     return render_template('admin_dashboard.html', tasks=tasks) ##render the admin dashboard template with the tasks
                      
 ##add task route
@@ -95,8 +92,8 @@ def admin_dashboard():
 @login_required ##login required decorator to protect the route
 def add_task():
     if request.method == 'POST':
-        title = request.form.get['title'] ##get the title from the form
-        description = request.form.get['description'] ##get the description from the form
+        title = request.form.get('title') ##get the title from the form
+        description = request.form.get('description') ##get the description from the form
         shared_with_id = int(request.form['shared_with']) ##get the shared with user id from the form
         new_task = Task(title=title, description=description, created_by=current_user.id, shared_with=shared_with_id)
         
@@ -104,11 +101,12 @@ def add_task():
         db.session.commit()
         
         flash ('Task added successfully!','success')
+        return redirect(url_for('dashboard'))
         
     users = User.query.filter(User.id != current_user.id).all() ##query all users except the current user
     return render_template('add_task.html', users=users) ##render the add task template with the users
-  
-  ##edit task route
+
+##edit task route
   
 @app.route('/edit_task/<int:task_id>', methods=['GET', 'POST'])
 @login_required
@@ -151,4 +149,11 @@ def delete_task(task_id):
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+##execute the app
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all() ##create the database tables
+    app.run(debug=True) ##run the app in debug mode
     
