@@ -7,9 +7,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
 from models import User, Task
 
-app = Flask(__name__, template_folder='app/templates') ##initializing the Flask app
+app = Flask(__name__, template_folder='app/templates', instance_relative_config=True) ##initializing the Flask app
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'supersecretkey') ##secret key for the app
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///database.db') ##database URI
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///' + os.path.join(app.instance_path, 'database.db')) ##database URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False ##to suppress the warning and save on memory
 app.config['FLASK_ENV'] = os.getenv('FLASK_ENV', 'development')
 app.config['FLASK_DEBUG'] = os.getenv('FLASK_DEBUG', '1') == '1'
