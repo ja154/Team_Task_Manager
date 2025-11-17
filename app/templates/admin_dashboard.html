@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>All Tasks (Admin View)</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Title</th><th>Description</th><th>Status</th><th>Created By</th><th>Shared With</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr>
+            <td>{{ task.title }}</td>
+            <td>{{ task.description }}</td>
+            <td>{{ task.status }}</td>
+            <td>{{ task.created_by }}</td>
+            <td>{{ task.shared_with }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

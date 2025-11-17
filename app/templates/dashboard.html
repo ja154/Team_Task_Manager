@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>My Tasks</h2>
+{% if created_tasks %}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Shared With</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in created_tasks %}
+        <tr>
+            <td>{{ task.title }}</td>
+            <td>{{ task.description }}</td>
+            <td>{{ task.status }}</td>
+            <td>{{ task.receiver.username if task.receiver else 'Not shared' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <p>You haven't created any tasks yet.</p>
+{% endif %}
+
+<h2 class="mt-4">Tasks Shared With Me</h2>
+{% if shared_tasks %}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Created By</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in shared_tasks %}
+        <tr>
+            <td>{{ task.title }}</td>
+            <td>{{ task.description }}</td>
+            <td>{{ task.status }}</td>
+            <td>{{ task.creator.username if task.creator else 'Unknown' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <p>No one has shared a task with you yet.</p>
+{% endif %}
+{% endblock %}

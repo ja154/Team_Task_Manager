@@ -1,13 +1,18 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
 from models import User, Task
 
-app = Flask(__name__) ##initializing the Flask app
-app.config['SECRET_KEY'] = 'testkey' ##secret key for the app
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db' ##database URI
+app = Flask(__name__, template_folder='app/templates') ##initializing the Flask app
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'supersecretkey') ##secret key for the app
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///database.db') ##database URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False ##to suppress the warning and save on memory
+app.config['FLASK_ENV'] = os.getenv('FLASK_ENV', 'development')
+app.config['FLASK_DEBUG'] = os.getenv('FLASK_DEBUG', '1') == '1'
 
 
 db.init_app(app) ##initializing the database or plugging in the db to the main app system
@@ -32,13 +37,21 @@ def home():
 @app.route('/register', methods=['GET', 'POST']) ##register route
 def register():
     if request.method == 'POST': ##if the request method is post
-        username = request.form.get('username') ##get the username from the form
+        username = request.form.get('username', '').strip() ##get the username from the form
+        email = request.form.get('email', '').strip() ##get the email from the form
         password = generate_password_hash(request.form['password']) ##hash the password 
         role = request.form.get('role','member') ##get the role from the form
-        email = request.form.get('email') ##get the email from the form
         
+        if not email:
+            flash('Email is required','error') ##flash error message
+            return redirect(url_for('register')) ##redirect to register page
+
         if User.query.filter_by(username=username).first(): ##check if the username already exists
             flash('Username already exists','error') ##flash error message
+            return redirect(url_for('register')) ##redirect to register page
+
+        if User.query.filter_by(email=email).first(): ##check if the email already exists
+            flash('Email already registered','error') ##flash error message
             return redirect(url_for('register')) ##redirect to register page
         
         ##If new user data is saved in the db
@@ -70,9 +83,9 @@ def login():
 @app.route('/dashboard') ##dashboard route
 @login_required ##login required decorator to protect the route
 def dashboard():
-    my_tasks = Task.query.filter((Task.created_by == current_user.id) | (Task.shared_with == current_user.id)).all() ##query the tasks created by or shared with the current user
-    shared_tasks = Task.query.filter_by(shared_with=current_user.id).all() ##query the tasks shared with the current user
-    return render_template('dashboard.html', my_tasks=my_tasks, shared_tasks=shared_tasks) ##render the dashboard template with the tasks
+    created_tasks = Task.query.filter_by(created_by=current_user.id).all() ##tasks created by the current user
+    shared_tasks = Task.query.filter_by(shared_with=current_user.id).all() ##tasks shared with the current user
+    return render_template('dashboard.html', created_tasks=created_tasks, shared_tasks=shared_tasks) ##render the dashboard template with the tasks
 
 ##Admin dashboard route for admin users
 
@@ -155,5 +168,5 @@ def logout():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all() ##create the database tables
-    app.run(debug=True) ##run the app in debug mode
+    app.run(debug=app.config['FLASK_DEBUG']) ##run the app in debug mode
     

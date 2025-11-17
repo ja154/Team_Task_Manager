@@ -7,8 +7,18 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(150), unique=True, nullable=False) ## email
     password = db.Column(db.String(150), nullable=False) ## password
     role = db.Column(db.String(15), default = 'member') ## role
-    created_task = db.relationship('Task', backref='creator', foreign_key='Task.created_by', lazy=True) ## created tasks linking users with tasks they  create
-    shared_tasks = db.relationship('Task', backref='receiver', foreign_key='Task.shared_with', lazy=True) ## shared tasks linking users with tasks they are shared with
+    created_task = db.relationship(
+        'Task',
+        backref='creator',
+        foreign_keys='Task.created_by',
+        lazy=True
+    ) ## created tasks linking users with tasks they create
+    shared_tasks = db.relationship(
+        'Task',
+        backref='receiver',
+        foreign_keys='Task.shared_with',
+        lazy=True
+    ) ## shared tasks linking users with tasks they are shared with
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True) ## primary key
